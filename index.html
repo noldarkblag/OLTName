@@ -1,0 +1,200 @@
+HTML
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      background-color: #ffffff;
+    }
+
+    /* Outer Container */
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    /* Top Title Box */
+    .title-box {
+      width: 100%;
+      background-color: #D0E1F9;
+      border: 1px solid #333333;
+      border-radius: 20px;
+      padding: 25px 0;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #000000;
+      box-sizing: border-box;
+    }
+
+    /* Input Section */
+    .input-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      width: 100%;
+    }
+
+    .input-label {
+      font-size: 20px;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    .input-box {
+      width: 320px;
+      height: 60px;
+      background-color: #D0E1F9;
+      border: 1px solid #333333;
+      border-radius: 15px;
+      font-size: 18px;
+      padding: 0 15px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    /* Search Button */
+    .search-btn {
+      background-color: #D0E1F9;
+      border: 1px solid #333333;
+      border-radius: 4px;
+      padding: 8px 30px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #000000;
+    }
+
+    .search-btn:hover {
+      background-color: #B5D2F8;
+    }
+
+    /* Results Table */
+    .results-container {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #cccccc;
+      padding: 10px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background-color: #4A90E2;
+      color: white;
+    }
+
+    #statusMessage {
+      font-style: italic;
+      color: #555;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- Title Box -->
+    <div class="title-box">
+      OUTAGE DASHBOARD
+    </div>
+
+    <!-- Input Row -->
+    <div class="input-group">
+      <span class="input-label">Type OLTName:</span>
+      <input type="text" id="oltInput" class="input-box" />
+    </div>
+
+    <!-- Search Button -->
+    <button class="search-btn" onclick="runSearch()">SEARCH</button>
+  </div>
+
+  <!-- Results Table Section -->
+  <div class="results-container">
+    <div id="statusMessage"></div>
+    <table id="resultsTable" style="display: none;">
+      <thead>
+        <tr>
+          <th>Date/Time</th>
+          <th>From</th>
+          <th>Subject</th>
+          <th>SFDC Ticket ID</th>
+          <th>Ticket Status</th>
+          <th>Affected Nodes/Links</th>
+          <th>Latest Update</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function runSearch() {
+      var oltName = document.getElementById('oltInput').value.trim();
+      var statusMsg = document.getElementById('statusMessage');
+      var table = document.getElementById('resultsTable');
+      var tbody = document.getElementById('tableBody');
+
+      if (!oltName) {
+        alert('Please enter an OLT Name.');
+        return;
+      }
+
+      statusMsg.innerText = 'Searching Gmail for outage updates...';
+      tbody.innerHTML = '';
+      table.style.display = 'none';
+
+      // Call Apps Script Backend
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (data.error) {
+            statusMsg.innerText = 'Error: ' + data.error;
+          } else if (data.results && data.results.length > 0) {
+            statusMsg.innerText = 'Matches Found: ' + data.results.length;
+            
+            data.results.forEach(function(row) {
+              var tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${row.date}</td>
+                <td>${row.from}</td>
+                <td>${row.subject}</td>
+                <td>${row.sfdcTicket}</td>
+                <td>${row.status}</td>
+                <td>${row.affectedNodes}</td>
+                <td>${row.update}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+
+            table.style.display = 'table';
+          } else {
+            statusMsg.innerText = 'No matching emails found for: "' + oltName + '"';
+          }
+        })
+        .searchGmail(oltName);
+    }
+  </script>
+
+</body>
+</html>
