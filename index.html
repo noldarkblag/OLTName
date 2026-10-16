@@ -12,7 +12,6 @@
       background-color: #ffffff;
     }
 
-    /* Outer Container */
     .dashboard-container {
       display: flex;
       flex-direction: column;
@@ -22,7 +21,6 @@
       max-width: 700px;
     }
 
-    /* Top Title Box */
     .title-box {
       width: 100%;
       background-color: #D0E1F9;
@@ -36,7 +34,6 @@
       box-sizing: border-box;
     }
 
-    /* Input Section */
     .input-group {
       display: flex;
       align-items: center;
@@ -63,7 +60,6 @@
       box-sizing: border-box;
     }
 
-    /* Search Button */
     .search-btn {
       background-color: #D0E1F9;
       border: 1px solid #333333;
@@ -79,81 +75,98 @@
       background-color: #B5D2F8;
     }
 
-    /* Results Table */
     .results-container {
       margin-top: 30px;
       width: 100%;
-      max-width: 900px;
+      max-width: 750px;
     }
 
-    table {
+    .result-title {
+      font-style: italic;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    /* Green Notification Card Style */
+    .card {
+      width: 100%;
+      background-color: #A3CF95;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      font-size: 13px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .card-header {
+      background-color: #0B6623;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      padding: 6px 10px;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+
+    .card-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
     }
 
-    th, td {
-      border: 1px solid #cccccc;
-      padding: 10px;
-      text-align: left;
-      font-size: 13px;
+    .card-table td {
+      padding: 4px 10px;
+      vertical-align: top;
+      color: #000000;
     }
 
-    th {
-      background-color: #4A90E2;
-      color: white;
+    .card-table td.label-col {
+      font-weight: bold;
+      width: 28%;
+      color: #ffffff;
+      background-color: #0B6623;
+    }
+
+    .card-table tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     #statusMessage {
       font-style: italic;
       color: #555;
-      margin-top: 10px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
 
   <div class="dashboard-container">
-    <!-- Title Box -->
     <div class="title-box">
       OUTAGE DASHBOARD
     </div>
 
-    <!-- Input Row -->
     <div class="input-group">
       <span class="input-label">Type OLTName:</span>
-      <input type="text" id="oltInput" class="input-box" placeholder="e.g. CCN004-OLT-06" />
+      <input type="text" id="oltInput" class="input-box" />
     </div>
 
-    <!-- Search Button -->
     <button class="search-btn" onclick="runSearch()">SEARCH</button>
   </div>
 
-  <!-- Results Table Section -->
   <div class="results-container">
     <div id="statusMessage"></div>
-    <table id="resultsTable" style="display: none;">
-      <thead>
-        <tr>
-          <th>Date/Time</th>
-          <th>From</th>
-          <th>Subject</th>
-          <th>SFDC Ticket ID</th>
-          <th>Ticket Status</th>
-          <th>Affected Nodes/Links</th>
-          <th>Latest Update</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div id="resultsWrapper" style="display: none;">
+      <div class="result-title">RESULT:</div>
+      <div id="cardsList"></div>
+    </div>
   </div>
 
   <script>
     function runSearch() {
       var oltName = document.getElementById('oltInput').value.trim();
       var statusMsg = document.getElementById('statusMessage');
-      var table = document.getElementById('resultsTable');
-      var tbody = document.getElementById('tableBody');
+      var resultsWrapper = document.getElementById('resultsWrapper');
+      var cardsList = document.getElementById('cardsList');
 
       if (!oltName) {
         alert('Please enter an OLT Name.');
@@ -161,34 +174,39 @@
       }
 
       statusMsg.innerText = 'Searching Gmail for outage updates...';
-      tbody.innerHTML = '';
-      table.style.display = 'none';
+      cardsList.innerHTML = '';
+      resultsWrapper.style.display = 'none';
 
-      // Tawagin ang backend sa Code.gs
       google.script.run
         .withSuccessHandler(function(data) {
           if (data.error) {
             statusMsg.innerText = 'Error: ' + data.error;
           } else if (data.results && data.results.length > 0) {
-            statusMsg.innerText = 'Matches Found: ' + data.results.length;
+            statusMsg.innerText = '';
             
-            data.results.forEach(function(row) {
-              var tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td>${row.date}</td>
-                <td>${row.from}</td>
-                <td>${row.subject}</td>
-                <td>${row.sfdcTicket}</td>
-                <td>${row.status}</td>
-                <td>${row.affectedNodes}</td>
-                <td>${row.update}</td>
+            data.results.forEach(function(item) {
+              var cardHtml = `
+                <div class="card">
+                  <div class="card-header">NETWORK EVENT NOTIFICATION</div>
+                  <table class="card-table">
+                    <tr><td class="label-col">Subject</td><td><b>${item.subject}</b></td></tr>
+                    <tr><td class="label-col">SFDC Ticket ID</td><td>${item.sfdcTicket}</td></tr>
+                    <tr><td class="label-col">CMS Ticket ID</td><td>${item.cmsTicket}</td></tr>
+                    <tr><td class="label-col">Affected Service/Area</td><td>${item.affectedArea}</td></tr>
+                    <tr><td class="label-col">Affected Nodes/Links</td><td>${item.affectedNodes}</td></tr>
+                    <tr><td class="label-col">Affected Users (From IM)</td><td>${item.affectedUsers}</td></tr>
+                    <tr><td class="label-col">Start Time</td><td>${item.startTime}</td></tr>
+                    <tr><td class="label-col">Completion Time</td><td>${item.completionTime}</td></tr>
+                    <tr><td class="label-col">Ticket Status</td><td><b>${item.ticketStatus}</b></td></tr>
+                  </table>
+                </div>
               `;
-              tbody.appendChild(tr);
+              cardsList.innerHTML += cardHtml;
             });
 
-            table.style.display = 'table';
+            resultsWrapper.style.display = 'block';
           } else {
-            statusMsg.innerText = 'No matching emails found for: "' + oltName + '"';
+            statusMsg.innerText = 'No matching outage notification found for: "' + oltName + '"';
           }
         })
         .withFailureHandler(function(err) {
