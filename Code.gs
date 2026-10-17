@@ -16,30 +16,31 @@ function doGet(e) {
 function searchGmail(oltName) {
   try {
     var query = 'label:gnoc ' + oltName;
+    // Naghahanap ng matching threads
     var threads = GmailApp.search(query, 0, 10);
-    var results = [];
 
     if (threads.length === 0) {
       return { results: [] };
     }
 
-    threads.forEach(function(thread) {
-      var messages = thread.getMessages();
-      var message = messages[messages.length - 1]; // Pinakabagong email
-      var body = message.getPlainBody();
+    // Kuhain LAMANG ang pinakabagong thread (ang unang lumabas sa search)
+    var latestThread = threads[0];
+    var messages = latestThread.getMessages();
+    var latestMessage = messages[messages.length - 1]; // Pinakabagong email sa thread na iyon
+    var body = latestMessage.getPlainBody();
 
-      results.push({
-        subject: message.getSubject(),
-        sfdcTicket: extractField(body, 'SFDC Ticket ID'),
-        cmsTicket: extractField(body, 'CMS Ticket ID'),
-        affectedArea: extractField(body, 'Affected Service/Area'),
-        affectedNodes: extractField(body, 'Affected Nodes/Links'),
-        affectedUsers: extractField(body, 'Affected Users'),
-        startTime: extractField(body, 'Start Time'),
-        completionTime: extractField(body, 'Completion Time'),
-        ticketStatus: extractField(body, 'Ticket Status')
-      });
-    });
+    // Isa lang ang ilalagay sa array ng results
+    var results = [{
+      subject: latestMessage.getSubject(),
+      sfdcTicket: extractField(body, 'SFDC Ticket ID'),
+      cmsTicket: extractField(body, 'CMS Ticket ID'),
+      affectedArea: extractField(body, 'Affected Service/Area'),
+      affectedNodes: extractField(body, 'Affected Nodes/Links'),
+      affectedUsers: extractField(body, 'Affected Users'),
+      startTime: extractField(body, 'Start Time'),
+      completionTime: extractField(body, 'Completion Time'),
+      ticketStatus: extractField(body, 'Ticket Status')
+    }];
 
     return { results: results };
   } catch (e) {
