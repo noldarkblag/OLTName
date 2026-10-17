@@ -1,47 +1,50 @@
-JavaScript
 function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index')
-    .setTitle('Outage Dashboard')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  return HtmlService.createHtmlOutputFromFile('index');
 }
 
 function searchGmail(oltName) {
-  if (!oltName) {
-    return { error: 'Please enter an OLT Name.' };
-  }
-
   try {
-    var query = oltName.trim();
+    // Naghahanap sa tiyak na Gmail Label/Folder na 'gnoc' at kasama ang OLT Name
+    // Pwedeng gamitin ang `label:gnoc` o `label:"gnoc"`
+    var query = 'label:gnoc ' + oltName;
+    
+    // Kukuhanin ang mga matching threads
     var threads = GmailApp.search(query, 0, 10);
     var results = [];
 
-    for (var i = 0; i < threads.length; i++) {
-      var messages = threads[i].getMessages();
-      var msg = messages[messages.length - 1]; 
-      var body = msg.getPlainBody() || '';
-      var subject = msg.getSubject() || '';
-
-      results.push({
-        subject: subject || 'N/A',
-        sfdcTicket: extractFieldValue(body, 'SFDC Ticket ID') || extractFieldValue(body, 'SFDC Ticket') || 'N/A',
-        cmsTicket: extractFieldValue(body, 'CMS Ticket ID') || extractFieldValue(body, 'CMS Ticket') || 'undefined',
-        affectedArea: extractFieldValue(body, 'Affected Service/Area') || extractFieldValue(body, 'Affected Area') || 'N/A',
-        affectedNodes: extractFieldValue(body, 'Affected Nodes/Links') || extractFieldValue(body, 'Affected Nodes') || 'N/A',
-        affectedUsers: extractFieldValue(body, 'Affected Users') || extractFieldValue(body, 'Affected Users (From IM)') || 'N/A',
-        startTime: extractFieldValue(body, 'Start Time') || 'N/A',
-        completionTime: extractFieldValue(body, 'Completion Time') || 'N/A',
-        ticketStatus: extractFieldValue(body, 'Ticket Status') || 'N/A'
-      });
+    if (threads.length === 0) {
+      return { results: [] };
     }
 
+    threads.forEach(function(thread) {
+      var messages = thread.getMessages();
+      // Kuhain ang pinakabagong email sa thread
+      var message = messages[messages.length - 1]; 
+      var body = message.getPlainBody();
+
+      results.push({
+        subject: message.getSubject(),
+        sfdcTicket: extractField(body, 'SFDC Ticket ID'),
+        cmsTicket: extractField(body, 'CMS Ticket ID'),
+        affectedArea: extractField(body, 'Affected Service/Area'),
+        affectedNodes: extractField(body, 'Affected Nodes/Links'),
+        affectedUsers: extractField(body, 'Affected Users'),
+        startTime: extractField(body, 'Start Time'),
+        completionTime: extractField(body, 'Completion Time'),
+        ticketStatus: extractField(body, 'Ticket Status')
+      });
+    });
+
     return { results: results };
-  } catch (err) {
-    return { error: err.toString() };
+  } catch (e) {
+    return { error: e.toString() };
   }
 }
 
-function extractFieldValue(text, labelName) {
-  var regex = new RegExp(labelName + '\\s*:?\\s*\t*([^\r\n]+)', 'i');
+// Helper function para mag-extract ng data sa tabi ng label mula sa email text
+function extractField(text, labelName) {
+  // Naghahanap ng format na "Label Name: Value"
+  var regex = new RegExp(labelName + '\\s*:\\s*(.*)', 'i');
   var match = text.match(regex);
-  return match ? match[1].trim() : '';
+  return match ? match[1].trim() : 'N/A';
 }
