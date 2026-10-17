@@ -1,4 +1,4 @@
-ffunction doGet(e) {
+function doGet(e) {
   // Kunin ang parameter mula sa URL query string
   const action = e.parameter.action;
   let result = {};
