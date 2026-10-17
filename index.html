@@ -160,66 +160,63 @@
   </div>
 
   <script>
-    function runSearch() {
-      var oltName = document.getElementById('oltInput').value.trim();
-      var statusMsg = document.getElementById('statusMessage');
-      var resultsWrapper = document.getElementById('resultsWrapper');
-      var cardsList = document.getElementById('cardsList');
+  // Palitan ang URL na ito ng totoong Web App URL mula sa Google Apps Script Deployment
+  const WEB_APP_URL = "PASTE_YOUR_ACTUAL_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-      if (!oltName) {
-        alert('Please enter an OLT Name.');
-        return;
-      }
+  function runSearch() {
+    var oltName = document.getElementById('oltInput').value.trim();
+    var statusMsg = document.getElementById('statusMessage');
+    var resultsWrapper = document.getElementById('resultsWrapper');
+    var cardsList = document.getElementById('cardsList');
 
-      statusMsg.style.color = '#555';
-      statusMsg.innerText = 'Searching Gmail for outage updates...';
-      cardsList.innerHTML = '';
-      resultsWrapper.style.display = 'none';
-
-      const WEB_APP_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
-
-// Paggamit ng fetch() para sa GET request
-fetch(WEB_APP_URL + "?action=getData")
-  .then(response => response.json())
-  .then(data => {
-    console.log("Success:", data);
-  })
-  .catch(error => {
-    console.error("Error:", error);
-  });
-            
-            data.results.forEach(function(item) {
-              var cardHtml = `
-                <div class="card">
-                  <div class="card-header">NETWORK EVENT NOTIFICATION</div>
-                  <table class="card-table">
-                    <tr><td class="label-col">Subject</td><td><b>${item.subject}</b></td></tr>
-                    <tr><td class="label-col">SFDC Ticket ID</td><td>${item.sfdcTicket}</td></tr>
-                    <tr><td class="label-col">CMS Ticket ID</td><td>${item.cmsTicket}</td></tr>
-                    <tr><td class="label-col">Affected Service/Area</td><td>${item.affectedArea}</td></tr>
-                    <tr><td class="label-col">Affected Nodes/Links</td><td>${item.affectedNodes}</td></tr>
-                    <tr><td class="label-col">Affected Users (From IM)</td><td>${item.affectedUsers}</td></tr>
-                    <tr><td class="label-col">Start Time</td><td>${item.startTime}</td></tr>
-                    <tr><td class="label-col">Completion Time</td><td>${item.completionTime}</td></tr>
-                    <tr><td class="label-col">Ticket Status</td><td><b>${item.ticketStatus}</b></td></tr>
-                  </table>
-                </div>
-              `;
-              cardsList.innerHTML += cardHtml;
-            });
-
-            resultsWrapper.style.display = 'block';
-          } else {
-            statusMsg.innerText = 'No matching outage notification found for: "' + oltName + '"';
-          }
-        })
-        .withFailureHandler(function(err) {
-          statusMsg.style.color = 'red';
-          statusMsg.innerText = 'Script Failure: ' + (err.message || err.toString());
-        })
-        .searchGmail(oltName);
+    if (!oltName) {
+      alert('Please enter an OLT Name.');
+      return;
     }
-  </script>
 
-</body>
-</html>
+    statusMsg.style.color = '#555';
+    statusMsg.innerText = 'Searching Gmail for outage updates...';
+    cardsList.innerHTML = '';
+    resultsWrapper.style.display = 'none';
+
+    // Paggamit ng fetch para tawagin ang Apps Script API
+    fetch(`${WEB_APP_URL}?olt=${encodeURIComponent(oltName)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          statusMsg.style.color = 'red';
+          statusMsg.innerText = 'Error: ' + data.error;
+        } else if (data.results && data.results.length > 0) {
+          statusMsg.innerText = '';
+          
+          data.results.forEach(function(item) {
+            var cardHtml = `
+              <div class="card">
+                <div class="card-header">NETWORK EVENT NOTIFICATION</div>
+                <table class="card-table">
+                  <tr><td class="label-col">Subject</td><td><b>${item.subject}</b></td></tr>
+                  <tr><td class="label-col">SFDC Ticket ID</td><td>${item.sfdcTicket}</td></tr>
+                  <tr><td class="label-col">CMS Ticket ID</td><td>${item.cmsTicket}</td></tr>
+                  <tr><td class="label-col">Affected Service/Area</td><td>${item.affectedArea}</td></tr>
+                  <tr><td class="label-col">Affected Nodes/Links</td><td>${item.affectedNodes}</td></tr>
+                  <tr><td class="label-col">Affected Users (From IM)</td><td>${item.affectedUsers}</td></tr>
+                  <tr><td class="label-col">Start Time</td><td>${item.startTime}</td></tr>
+                  <tr><td class="label-col">Completion Time</td><td>${item.completionTime}</td></tr>
+                  <tr><td class="label-col">Ticket Status</td><td><b>${item.ticketStatus}</b></td></tr>
+                </table>
+              </div>
+            `;
+            cardsList.innerHTML += cardHtml;
+          });
+
+          resultsWrapper.style.display = 'block';
+        } else {
+          statusMsg.innerText = 'No matching outage notification found for: "' + oltName + '"';
+        }
+      })
+      .catch(err => {
+        statusMsg.style.color = 'red';
+        statusMsg.innerText = 'Script Failure: ' + err.message;
+      });
+  }
+</script>
