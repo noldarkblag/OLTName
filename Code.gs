@@ -15,7 +15,6 @@ function doGet(e) {
 
 function searchGmail(oltName) {
   try {
-    // I-search ang Gmail label para sa OLT Name
     var query = 'label:gnoc "' + oltName + '"';
     var threads = GmailApp.search(query, 0, 15);
     var results = [];
@@ -24,30 +23,27 @@ function searchGmail(oltName) {
       return { results: [] };
     }
 
-    // Mag-loop sa threads para mahanap ang unang email na may OLT Name sa mismong Subject
     for (var i = 0; i < threads.length; i++) {
       var messages = threads[i].getMessages();
-      var latestMessage = messages[messages.length - 1]; // Pinakabagong email sa thread
+      var latestMessage = messages[messages.length - 1]; 
       var subject = latestMessage.getSubject();
 
-      // Tiyakin na ang Subject ay talagang naglalaman ng eksaktong OLT Name (Case-insensitive)
       if (subject.toLowerCase().indexOf(oltName.toLowerCase()) !== -1) {
         var body = latestMessage.getPlainBody();
 
         results.push({
           subject: subject,
-          sfdcTicket: extractField(body, 'SFDC Ticket ID'),
-          cmsTicket: extractField(body, 'CMS Ticket ID'),
-          affectedArea: extractField(body, 'Affected Service/Area'),
-          affectedNodes: extractField(body, 'Affected Nodes/Links'),
-          affectedUsers: extractField(body, 'Affected Users'),
-          startTime: extractField(body, 'Start Time'),
-          completionTime: extractField(body, 'Completion Time'),
-          ticketStatus: extractField(body, 'Ticket Status')
+          sfdcTicket: extractField(body, ['SFDC Ticket ID', 'SFDC Ticket', 'SFDC ID']),
+          cmsTicket: extractField(body, ['CMS Ticket ID', 'CMS Ticket', 'CMS ID']),
+          affectedArea: extractField(body, ['Affected Service/Area', 'Affected Area', 'Affected Service']),
+          affectedNodes: extractField(body, ['Affected Nodes/Links', 'Affected Nodes', 'Affected Links']),
+          affectedUsers: extractField(body, ['Affected Users (From IM)', 'Affected Users', 'Users Affected']),
+          startTime: extractField(body, ['Start Time', 'Event Start Time', 'Start Date/Time']),
+          completionTime: extractField(body, ['Completion Time', 'Estimated Completion Time', 'End Time', 'ETTR']),
+          ticketStatus: extractField(body, ['Ticket Status', 'Status'])
         });
 
-        // Hihinto agad pagkatapos makuha ang pinakabagong valid matching notification
-        break; 
+        break; // Kuhanin lang ang pinakabagong matching email
       }
     }
 
@@ -57,8 +53,24 @@ function searchGmail(oltName) {
   }
 }
 
-function extractField(text, labelName) {
-  var regex = new RegExp(labelName + '\\s*:\\s*(.*)', 'i');
-  var match = text.match(regex);
-  return match ? match[1].trim() : 'N/A';
+// Improved extraction function
+function extractField(text, possibleLabels) {
+  if (typeof possibleLabels === 'string') {
+    possibleLabels = [possibleLabels];
+  }
+
+  for (var i = 0; i < possibleLabels.length; i++) {
+    var label = possibleLabels[i];
+    
+    // Inilalayo sa asterisks, bold markers, at colon, e.g., "*SFDC Ticket ID:* 12345"
+    var regex = new RegExp('(?:\\*\\*)?' + label + '(?:\\*\\*)?\\s*[:=-]?\\s*([^\\r\\n]+)', 'i');
+    var match = text.match(regex);
+    
+    if (match && match[1].trim() !== '') {
+      // Nililinis ang anumang natitirang markdown formatting
+      return match[1].replace(/[\*\_]/g, '').trim();
+    }
+  }
+
+  return 'N/A';
 }
