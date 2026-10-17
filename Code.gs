@@ -4,11 +4,8 @@ function doGet() {
 
 function searchGmail(oltName) {
   try {
-    // Naghahanap sa tiyak na Gmail Label/Folder na 'gnoc' at kasama ang OLT Name
-    // Pwedeng gamitin ang `label:gnoc` o `label:"gnoc"`
+    // Isama ang label:gnoc para sa folder mo
     var query = 'label:gnoc ' + oltName;
-    
-    // Kukuhanin ang mga matching threads
     var threads = GmailApp.search(query, 0, 10);
     var results = [];
 
@@ -18,8 +15,7 @@ function searchGmail(oltName) {
 
     threads.forEach(function(thread) {
       var messages = thread.getMessages();
-      // Kuhain ang pinakabagong email sa thread
-      var message = messages[messages.length - 1]; 
+      var message = messages[messages.length - 1]; // Pinakabagong email
       var body = message.getPlainBody();
 
       results.push({
@@ -41,9 +37,7 @@ function searchGmail(oltName) {
   }
 }
 
-// Helper function para mag-extract ng data sa tabi ng label mula sa email text
 function extractField(text, labelName) {
-  // Naghahanap ng format na "Label Name: Value"
   var regex = new RegExp(labelName + '\\s*:\\s*(.*)', 'i');
   var match = text.match(regex);
   return match ? match[1].trim() : 'N/A';
