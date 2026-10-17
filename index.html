@@ -176,13 +176,17 @@
       cardsList.innerHTML = '';
       resultsWrapper.style.display = 'none';
 
-      google.script.run
-        .withSuccessHandler(function(data) {
-          if (data.error) {
-            statusMsg.style.color = 'red';
-            statusMsg.innerText = 'Error: ' + data.error;
-          } else if (data.results && data.results.length > 0) {
-            statusMsg.innerText = '';
+      const WEB_APP_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+// Paggamit ng fetch() para sa GET request
+fetch(WEB_APP_URL + "?action=getData")
+  .then(response => response.json())
+  .then(data => {
+    console.log("Success:", data);
+  })
+  .catch(error => {
+    console.error("Error:", error);
+  });
             
             data.results.forEach(function(item) {
               var cardHtml = `
