@@ -1,30 +1,20 @@
 function doGet(e) {
-  // Kunin ang parameter mula sa URL query string
-  const action = e.parameter.action;
-  let result = {};
-
-  if (action === "getData") {
-    result = { status: "success", message: "Hello mula sa Google Apps Script!" };
+  var oltName = e.parameter.olt;
+  
+  if (!oltName) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "Please provide an OLT Name." }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // RETURN AS JSON (Mahalaga para sa fetch API)
-  return ContentService.createTextOutput(JSON.stringify(result))
+  // Tawagin ang search function
+  var data = searchGmail(oltName);
+
+  return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function doPost(e) {
-  // Para sa pagpapadala ng data pabalik sa Apps Script
-  const data = JSON.parse(e.postData.contents);
-  
-  // Halimbawa ng pag-process ng data:
-  const result = { status: "success", received: data };
-
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
 function searchGmail(oltName) {
   try {
-    // Isama ang label:gnoc para sa folder mo
     var query = 'label:gnoc ' + oltName;
     var threads = GmailApp.search(query, 0, 10);
     var results = [];
