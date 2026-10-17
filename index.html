@@ -160,7 +160,6 @@
   </div>
 
   <script>
-  // Palitan ang URL na ito ng totoong Web App URL mula sa Google Apps Script Deployment
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqvCU9qXJ7KXAkqEuGC-QxOwi0acMO_tBVpiafCt7D7JdprNiW2doG32-7bTSHMitoKg/exec";
 
   function runSearch() {
@@ -179,9 +178,17 @@
     cardsList.innerHTML = '';
     resultsWrapper.style.display = 'none';
 
-    // Paggamit ng fetch para tawagin ang Apps Script API
-    fetch(`${WEB_APP_URL}?olt=${encodeURIComponent(oltName)}`)
-      .then(response => response.json())
+    // Idinagdag ang { redirect: 'follow' } para sa Google Apps Script
+    fetch(`${WEB_APP_URL}?olt=${encodeURIComponent(oltName)}`, {
+      method: 'GET',
+      redirect: 'follow'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response error');
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.error) {
           statusMsg.style.color = 'red';
@@ -218,5 +225,7 @@
         statusMsg.style.color = 'red';
         statusMsg.innerText = 'Script Failure: ' + err.message;
       });
+  }
+</script>
   }
 </script>
