@@ -15,32 +15,41 @@ function doGet(e) {
 
 function searchGmail(oltName) {
   try {
-    var query = 'label:gnoc ' + oltName;
-    // Naghahanap ng matching threads
-    var threads = GmailApp.search(query, 0, 10);
+    // I-search ang Gmail label para sa OLT Name
+    var query = 'label:gnoc "' + oltName + '"';
+    var threads = GmailApp.search(query, 0, 15);
+    var results = [];
 
     if (threads.length === 0) {
       return { results: [] };
     }
 
-    // Kuhain LAMANG ang pinakabagong thread (ang unang lumabas sa search)
-    var latestThread = threads[0];
-    var messages = latestThread.getMessages();
-    var latestMessage = messages[messages.length - 1]; // Pinakabagong email sa thread na iyon
-    var body = latestMessage.getPlainBody();
+    // Mag-loop sa threads para mahanap ang unang email na may OLT Name sa mismong Subject
+    for (var i = 0; i < threads.length; i++) {
+      var messages = threads[i].getMessages();
+      var latestMessage = messages[messages.length - 1]; // Pinakabagong email sa thread
+      var subject = latestMessage.getSubject();
 
-    // Isa lang ang ilalagay sa array ng results
-    var results = [{
-      subject: latestMessage.getSubject(),
-      sfdcTicket: extractField(body, 'SFDC Ticket ID'),
-      cmsTicket: extractField(body, 'CMS Ticket ID'),
-      affectedArea: extractField(body, 'Affected Service/Area'),
-      affectedNodes: extractField(body, 'Affected Nodes/Links'),
-      affectedUsers: extractField(body, 'Affected Users'),
-      startTime: extractField(body, 'Start Time'),
-      completionTime: extractField(body, 'Completion Time'),
-      ticketStatus: extractField(body, 'Ticket Status')
-    }];
+      // Tiyakin na ang Subject ay talagang naglalaman ng eksaktong OLT Name (Case-insensitive)
+      if (subject.toLowerCase().indexOf(oltName.toLowerCase()) !== -1) {
+        var body = latestMessage.getPlainBody();
+
+        results.push({
+          subject: subject,
+          sfdcTicket: extractField(body, 'SFDC Ticket ID'),
+          cmsTicket: extractField(body, 'CMS Ticket ID'),
+          affectedArea: extractField(body, 'Affected Service/Area'),
+          affectedNodes: extractField(body, 'Affected Nodes/Links'),
+          affectedUsers: extractField(body, 'Affected Users'),
+          startTime: extractField(body, 'Start Time'),
+          completionTime: extractField(body, 'Completion Time'),
+          ticketStatus: extractField(body, 'Ticket Status')
+        });
+
+        // Hihinto agad pagkatapos makuha ang pinakabagong valid matching notification
+        break; 
+      }
+    }
 
     return { results: results };
   } catch (e) {
