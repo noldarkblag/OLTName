@@ -167,25 +167,32 @@
 </head>
 <body>
 
-  <div class="dashboard-container">
-    <div class="title-box">
-      OUTAGE DASHBOARD
+  <!-- DAGDAG ITO PARA MAPIGILAN ANG PAG-SUMPO NG BORDER SA BUONG SCREEN -->
+  <div class="main-box">
+
+    <div class="dashboard-container">
+      <div class="title-box">
+        OUTAGE DASHBOARD
+      </div>
+
+      <div class="input-group">
+        <span class="input-label">Type OLTName:</span>
+        <input type="text" id="oltInput" class="input-box" />
+        <button class="search-btn" onclick="runSearch()">SEARCH</button>
+      </div>
     </div>
 
-    <div class="input-group">
-      <span class="input-label">Type OLTName:</span>
-      <input type="text" id="oltInput" class="input-box" />
-      <button class="search-btn" onclick="runSearch()">SEARCH</button>
+    <div class="results-container">
+      <div id="statusMessage"></div>
+      <div id="resultsWrapper" style="display: none;">
+        <div class="result-title">RESULT:</div>
+        <div id="cardsList"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="results-container">
-    <div id="statusMessage"></div>
-    <div id="resultsWrapper" style="display: none;">
-      <div class="result-title">RESULT:</div>
-      <div id="cardsList"></div>
-    </div>
-  </div>
+  </div> <!-- ISARA ANG MAIN-BOX DITO -->
+
+</body>
 
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh8QBhZx_bsNWN84hABBaObBQ35g6iFAs4flU0wZGvQ8Dp6BzC8yK_e-IslccArffNow/exec";
