@@ -88,22 +88,22 @@
       margin-bottom: 15px;
     }
 
-    .card {
-      width: 100%;
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      font-size: 13px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    /* Green Card Theme (Closed / Resolved) */
+    .card.theme-green {
+      background-color: #A3CF95;
+    }
+    .card.theme-green .card-header,
+    .card.theme-green .card-table td.label-col {
+      background-color: #0B6623;
     }
 
-    .card-header {
-      color: white;
-      text-align: center;
-      font-weight: bold;
-      padding: 6px 10px;
-      font-size: 13px;
-      letter-spacing: 0.5px;
+    /* Red Card Theme (Open / Down) */
+    .card.theme-red {
+      background-color: #FADBD8;
+    }
+    .card.theme-red .card-header,
+    .card.theme-red .card-table td.label-col {
+      background-color: #C0392B;
     }
 
     .card-table {
@@ -121,28 +121,11 @@
       font-weight: bold;
       width: 28%;
       color: #ffffff;
+      background-color: #0B6623;
     }
 
     .card-table tr {
       border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    /* Green Theme (Closed) */
-    .card.theme-green {
-      background-color: #A3CF95;
-    }
-    .card.theme-green .card-header,
-    .card.theme-green .card-table td.label-col {
-      background-color: #0B6623;
-    }
-
-    /* Light Red Theme (Down/Open) */
-    .card.theme-red {
-      background-color: #FADBD8;
-    }
-    .card.theme-red .card-header,
-    .card.theme-red .card-table td.label-col {
-      background-color: #C0392B;
     }
 
     #statusMessage {
@@ -175,79 +158,73 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxh-iOxFhL2-o2UkDGQDO8gKTVooJJguYR8YU22AsAyEBImBN2ciqRYsWI8Q9PTM9c6nQ/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzh8QBhZx_bsNWN84hABBaObBQ35g6iFAs4flU0wZGvQ8Dp6BzC8yK_e-IslccArffNow/exec";
 
-    function runSearch() {
-      var oltName = document.getElementById('oltInput').value.trim();
-      var statusMsg = document.getElementById('statusMessage');
-      var resultsWrapper = document.getElementById('resultsWrapper');
-      var cardsList = document.getElementById('cardsList');
+  function runSearch() {
+    var oltName = document.getElementById('oltInput').value.trim();
+    var statusMsg = document.getElementById('statusMessage');
+    var resultsWrapper = document.getElementById('resultsWrapper');
+    var cardsList = document.getElementById('cardsList');
 
-      if (!oltName) {
-        alert('Please enter an OLT Name.');
-        return;
-      }
-
-      statusMsg.style.color = '#555';
-      statusMsg.innerText = 'Searching Gmail for outage updates...';
-      cardsList.innerHTML = '';
-      resultsWrapper.style.display = 'none';
-
-      fetch(`${WEB_APP_URL}?olt=${encodeURIComponent(oltName)}`, {
-        method: 'GET',
-        redirect: 'follow'
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response error');
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data.error) {
-            statusMsg.style.color = 'red';
-            statusMsg.innerText = 'Error: ' + data.error;
-          } else if (data.results && data.results.length > 0) {
-            statusMsg.innerText = '';
-            
-            data.results.forEach(function(item) {
-              var statusLower = (item.ticketStatus || '').toLowerCase();
-              var themeClass = 'theme-green';
-
-              if (statusLower.includes('down') || statusLower.includes('open')) {
-                themeClass = 'theme-red';
-              }
-
-              var cardHtml = `
-                <div class="card ${themeClass}">
-                  <div class="card-header">NETWORK EVENT NOTIFICATION</div>
-                  <table class="card-table">
-                    <tr><td class="label-col">Subject</td><td><b>${item.subject}</b></td></tr>
-                    <tr><td class="label-col">SFDC Ticket ID</td><td>${item.sfdcTicket}</td></tr>
-                    <tr><td class="label-col">CMS Ticket ID</td><td>${item.cmsTicket}</td></tr>
-                    <tr><td class="label-col">Affected Service/Area</td><td>${item.affectedArea}</td></tr>
-                    <tr><td class="label-col">Affected Nodes/Links</td><td>${item.affectedNodes}</td></tr>
-                    <tr><td class="label-col">Affected Users (From IM)</td><td>${item.affectedUsers}</td></tr>
-                    <tr><td class="label-col">Start Time</td><td>${item.startTime}</td></tr>
-                    <tr><td class="label-col">Completion Time</td><td>${item.completionTime}</td></tr>
-                    <tr><td class="label-col">Ticket Status</td><td><b>${item.ticketStatus}</b></td></tr>
-                  </table>
-                </div>
-              `;
-              cardsList.innerHTML += cardHtml;
-            });
-
-            resultsWrapper.style.display = 'block';
-          } else {
-            statusMsg.innerText = 'No matching outage notification found for: "' + oltName + '"';
-          }
-        })
-        .catch(err => {
-          statusMsg.style.color = 'red';
-          statusMsg.innerText = 'Script Failure: ' + err.message;
-        });
+    if (!oltName) {
+      alert('Please enter an OLT Name.');
+      return;
     }
-  </script>
+
+    statusMsg.style.color = '#555';
+    statusMsg.innerText = 'Searching Gmail for outage updates...';
+    cardsList.innerHTML = '';
+    resultsWrapper.style.display = 'none';
+
+    // Idinagdag ang { redirect: 'follow' } para sa Google Apps Script
+    fetch(`${WEB_APP_URL}?olt=${encodeURIComponent(oltName)}`, {
+      method: 'GET',
+      redirect: 'follow'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response error');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.error) {
+          statusMsg.style.color = 'red';
+          statusMsg.innerText = 'Error: ' + data.error;
+        } else if (data.results && data.results.length > 0) {
+          statusMsg.innerText = '';
+          
+          data.results.forEach(function(item) {
+            var cardHtml = `
+              <div class="card">
+                <div class="card-header">NETWORK EVENT NOTIFICATION</div>
+                <table class="card-table">
+                  <tr><td class="label-col">Subject</td><td><b>${item.subject}</b></td></tr>
+                  <tr><td class="label-col">SFDC Ticket ID</td><td>${item.sfdcTicket}</td></tr>
+                  <tr><td class="label-col">CMS Ticket ID</td><td>${item.cmsTicket}</td></tr>
+                  <tr><td class="label-col">Affected Service/Area</td><td>${item.affectedArea}</td></tr>
+                  <tr><td class="label-col">Affected Nodes/Links</td><td>${item.affectedNodes}</td></tr>
+                  <tr><td class="label-col">Affected Users (From IM)</td><td>${item.affectedUsers}</td></tr>
+                  <tr><td class="label-col">Start Time</td><td>${item.startTime}</td></tr>
+                  <tr><td class="label-col">Completion Time</td><td>${item.completionTime}</td></tr>
+                  <tr><td class="label-col">Ticket Status</td><td><b>${item.ticketStatus}</b></td></tr>
+                </table>
+              </div>
+            `;
+            cardsList.innerHTML += cardHtml;
+          });
+
+          resultsWrapper.style.display = 'block';
+        } else {
+          statusMsg.innerText = 'No matching outage notification found for: "' + oltName + '"';
+        }
+      })
+      .catch(err => {
+        statusMsg.style.color = 'red';
+        statusMsg.innerText = 'Script Failure: ' + err.message;
+      });
+  }
+</script>
 
 </body>
 </html>
